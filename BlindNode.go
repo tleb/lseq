@@ -59,6 +59,19 @@ func (n *BlindNode) Add(couple Couple, node BlindNode) {
 }
 
 func (n *BlindNode) Remove(couple Couple) {
+	child, ok := n.Children[couple]
+	if !ok {
+		// child does not exist, no need to delete him
+		return
+	}
+
+	if len(child.Children) != 0 {
+		// it has children, we can't just delete it, we remove the char from
+		// the node and don't remove the couple from n.Order
+		child.Char = 0
+		return
+	}
+
 	delete(n.Children, couple)
 
 	var i int
