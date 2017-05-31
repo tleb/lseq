@@ -2,11 +2,12 @@ package lseq
 
 import (
 	"errors"
+	"math"
 	"math/rand"
 )
 
 const MaxSite = 32767
-const MaxUInt = ^uint(0)
+const MaxPos = math.MaxInt32
 
 type LSEQ struct {
 	Site  uint
@@ -27,7 +28,7 @@ func NewLSEQ(site, clock, step uint) LSEQ {
 	// using BlindNode.Add directly because LSEQ.Add takes a Node so it would
 	// be more complicated to init
 	res.Root.Add(MinCouple(), NewBlindNode(0, 0, false))
-	res.Root.Add(MaxCouple(0), NewBlindNode(MaxUInt, 0, false))
+	res.Root.Add(MaxCouple(0), NewBlindNode(MaxPos, 0, false))
 
 	return res
 }
@@ -106,7 +107,7 @@ func (l LSEQ) alloc(p, q Node) []Couple {
 	for i := 0; i < maxPathLen; i++ {
 		pc := getCouple(i, p.Path, false, 0)
 		qc := getCouple(i, q.Path, true, uint(len(p.Path)))
-		posDiff := distance(int(pc.Pos), int(qc.Pos))
+		posDiff := uintDistance(pc.Pos, qc.Pos)
 
 		if posDiff == 0 && pc.Site == qc.Site {
 			// positions and sites are equal, just keep going
@@ -146,7 +147,7 @@ func (l LSEQ) alloc(p, q Node) []Couple {
 }
 
 func (l LSEQ) coupleBetween(p, q Couple, currentDepth int) Couple {
-	step := minInt(int(l.Step), int(distance(int(p.Pos), int(q.Pos))))
+	step := minInt(int(l.Step), int(uintDistance(p.Pos, q.Pos)))
 	add := uint(rand.Intn(step + 1))
 
 	var pos uint

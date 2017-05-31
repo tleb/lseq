@@ -44,8 +44,16 @@ func getCouple(index int, path []Couple, max bool, depth uint) Couple {
 	return MinCouple()
 }
 
-func distance(a, b int) int {
-	if a-b > 0 {
+func uintDistance(a, b uint) uint {
+	if a > b {
+		return a - b
+	}
+
+	return b - a
+}
+
+func intDistance(a, b int) int {
+	if a > b {
 		return a - b
 	}
 

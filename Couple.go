@@ -14,7 +14,8 @@ func MinCouple() Couple {
 }
 
 func MaxCouple(depth uint) Couple {
-	return NewCouple(MaxSite, MaxUInt)
+	// TODO: use depth to determine
+	return NewCouple(MaxPos, MaxSite)
 }
 
 // Compare compares two Couple.
