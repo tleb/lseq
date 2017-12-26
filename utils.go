@@ -27,21 +27,22 @@ func maxInt(ints ...int) int {
 }
 
 func chooseStrategy(depth int) bool {
-	return depth%2 == 0
+	// == 1 so that we start with boundary+
+	return depth%2 == 1
 }
 
-// getCouple gets path[i] or, if it doesn't exist, get the smallest/biggest
-// couple possible (max defines smallest or biggest).
-func getCouple(index int, path []Couple, max bool, depth uint) Couple {
+// getTriple gets path[i] or, if it doesn't exist, get the smallest/biggest
+// triple possible (max defines smallest or biggest).
+func getTriple(index int, path []Triple, max bool, depth uint) Triple {
 	if len(path) > index {
 		return path[index]
 	}
 
 	if max {
-		return MaxCouple(depth)
+		return MaxTriple(depth)
 	}
 
-	return MinCouple()
+	return MinTriple()
 }
 
 func uintDistance(a, b uint) uint {
@@ -60,6 +61,6 @@ func intDistance(a, b int) int {
 	return b - a
 }
 
-func changeLastCouple(path []Couple, couple Couple) []Couple {
-	return append(path[:len(path)-1], couple)
+func changeLastTriple(path []Triple, triple Triple) []Triple {
+	return append(path[:len(path)-1], triple)
 }

@@ -1,32 +1,33 @@
 package lseq
 
+import (
+	"fmt"
+	"strings"
+)
+
 // BlindNode is a part of the node tree.
 // It is blind because it doesn't know the path required to get to it.
 // The character is optional, a node can have as only role to contain children.
 // Order is a slice of the keys from the Children map, used to order them.
 type BlindNode struct {
-	Clock    uint
 	Char     rune
 	IsRoot   bool
-	Children map[Couple]BlindNode
-	Order    []Couple
+	Children map[Triple]*BlindNode
+	Order    []Triple
 }
 
-func NewBlindNode(clock uint, char rune, isRoot bool) BlindNode {
+func NewBlindNode(char rune, isRoot bool) BlindNode {
 	return BlindNode{
-		clock,
 		char,
 		isRoot,
-		map[Couple]BlindNode{},
-		[]Couple{},
+		map[Triple]*BlindNode{},
+		[]Triple{},
 	}
 }
 
 // Length recursively calculates the number of characters, in this node and in
 // its children.
-func (n BlindNode) Length() uint {
-	var res uint
-
+func (n BlindNode) Length() (res uint) {
 	if n.IsChar() {
 		res++
 	}
@@ -35,31 +36,31 @@ func (n BlindNode) Length() uint {
 		res += v.Length()
 	}
 
-	return res
+	return
 }
 
-// Add a children and adds the Couple to n.Order.
-func (n *BlindNode) Add(couple Couple, node BlindNode) {
-	n.Children[couple] = node
+// Add a children and add the Triple to n.Order.
+func (n *BlindNode) Add(triple Triple, node BlindNode) {
+	n.Children[triple] = &node
 
-	// add couple in n.Order, at the right spot
+	// add triple in n.Order, at the right spot
 	for k, v := range n.Order {
-		if couple.Compare(v) == -1 {
-			// insert couple in index k
-			n.Order = append(n.Order, NewCouple(0, 0))
+		if triple.Compare(v) == -1 {
+			// insert triple in index k
+			n.Order = append(n.Order, NewTriple(0, 0, 0))
 			copy(n.Order[k+1:], n.Order[k:])
-			n.Order[k] = couple
+			n.Order[k] = triple
 
 			return
 		}
 	}
 
-	// couple is the biggest couple in n.Order
-	n.Order = append(n.Order, couple)
+	// triple is the biggest triple in n.Order
+	n.Order = append(n.Order, triple)
 }
 
-func (n *BlindNode) Remove(couple Couple) {
-	child, ok := n.Children[couple]
+func (n *BlindNode) Remove(triple Triple) {
+	child, ok := n.Children[triple]
 	if !ok {
 		// child does not exist, no need to delete him
 		return
@@ -67,16 +68,16 @@ func (n *BlindNode) Remove(couple Couple) {
 
 	if len(child.Children) != 0 {
 		// it has children, we can't just delete it, we remove the char from
-		// the node and don't remove the couple from n.Order
+		// the node and don't remove the triple from n.Order
 		child.Char = 0
 		return
 	}
 
-	delete(n.Children, couple)
+	delete(n.Children, triple)
 
 	var i int
 	for k, v := range n.Order {
-		if v == couple {
+		if v == triple {
 			i = k
 			break
 		}
@@ -86,9 +87,9 @@ func (n *BlindNode) Remove(couple Couple) {
 }
 
 // GetByIndex finds the nth Node.
-func (n BlindNode) GetByIndex(index int, path []Couple) (Node, int) {
+func (n *BlindNode) GetByIndex(index int, path []Triple) (Node, int) {
 	if !n.IsRoot && index == 0 {
-		return NewNode(n, path), -1
+		return NewNode(*n, path), -1
 	}
 
 	if !n.IsRoot {
@@ -108,13 +109,13 @@ func (n BlindNode) GetByIndex(index int, path []Couple) (Node, int) {
 }
 
 // GetByPath finds a BlindNode in the node tree based on a path.
-func (n *BlindNode) GetByPath(path []Couple) (*BlindNode, bool) {
+func (n *BlindNode) GetByPath(path []Triple) (*BlindNode, bool) {
 	if len(path) == 0 {
 		return n, true
 	}
 
-	nextCouple, path := path[0], path[1:]
-	child, ok := n.Children[nextCouple]
+	nextTriple, path := path[0], path[1:]
+	child, ok := n.Children[nextTriple]
 
 	if !ok {
 		return new(BlindNode), false
@@ -123,7 +124,7 @@ func (n *BlindNode) GetByPath(path []Couple) (*BlindNode, bool) {
 	return child.GetByPath(path)
 }
 
-// IsChar informs us whether this BlindNode contains a character or only is parent.
+// IsChar informs us whether this BlindNode contains a character or is only a parent.
 func (n BlindNode) IsChar() bool {
 	return !n.IsRoot && n.Char != 0
 }
@@ -140,4 +141,21 @@ func (n BlindNode) ToString() string {
 	}
 
 	return res
+}
+
+func (n BlindNode) Debug(triple Triple, depth int) {
+	if n.IsRoot {
+		depth -= 1
+	} else {
+		var tmp string
+		if n.IsChar() {
+			tmp = ": " + string(n.Char)
+		}
+
+		fmt.Printf("%v%v %v\n", strings.Repeat("\t", depth), triple, tmp)
+	}
+
+	for _, v := range n.Order {
+		n.Children[v].Debug(v, depth+1)
+	}
 }
